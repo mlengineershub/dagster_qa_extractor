@@ -1,0 +1,41 @@
+[project]
+name = "interview-qa-extractor"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "openai",
+    "ollama",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13.0",
+    "pytest-dotenv>=0.5.2",
+    "pytest>=8.3.3",
+    "ruff>=0.7.4",
+    "pypdf==4.3.1",
+    "PyPDF2==3.0.1 ",
+    "ollama",
+    "langchain_openai", 
+    "langchain_ollama",
+    "langchain_chroma",
+    "langchain_community", 
+    "langchain_text_splitters", 
+    "python-dotenv"
+]
+
+[tool.mypy]
+strict = true
+files = ["workspace/src"]
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+env_files = [".env"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+pythonpath = [
+  "workspace/src",
+]
