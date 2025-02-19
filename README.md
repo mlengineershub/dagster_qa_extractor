@@ -90,7 +90,7 @@ This project demonstrates how **LLMs can automate knowledge extraction**. Instea
    - The Dagster UI provides visibility into job runs, asset materializations, and pipeline status
    - Access the Dagster UI locally at `http://localhost:3000` after starting the server:
      ```shell
-     dagster dev
+     uv run dagster dev --workspace workspace.yaml
      ```
 
 ---
