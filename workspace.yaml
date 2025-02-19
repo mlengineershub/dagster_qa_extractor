@@ -1,0 +1,5 @@
+load_from:
+  - python_module:
+      location_name: extract_interview_questions
+      module_name: src.definitions
+      working_directory: workspaces/extract_interview_questions

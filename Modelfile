@@ -1,0 +1,3 @@
+# Modelfile
+FROM llama3.2:3b
+PARAMETER num_ctx 5000

@@ -2,11 +2,9 @@
 
 ## 📌 Project Overview
 
-This repository contains the code that **automatically extracts structured Q&A pairs** from well-known books in **Generative AI, NLP, ML, Mathematics for ML, and ML System Design**. The extracted data is then used to build **a high-quality interview question dataset**.
+This repository contains code that **automatically extracts structured Q&A pairs** from technical content. The extracted data is used to build **a high-quality interview question dataset**.
 
-This is a **perfect use case for LLMs** since they excel at **understanding, summarizing, and reformatting text** into structured formats like Q&A. Instead of manually curating interview questions, we leverage **locally deployed LLMs (DeepSeek-R1, LLaMA 3.2)** to **transform raw book content into well-structured interview-style questions and answers.**  
-
-🔗 **The extracted dataset is available here:** [nlp-math-interview-qa](https://huggingface.co/datasets/Azzedde/nlp-math-interview-qa)
+This is a **perfect use case for LLMs** since they excel at **understanding, summarizing, and reformatting text** into structured formats like Q&A. We leverage **locally deployed LLMs (LLaMA 3.2:3b)** to **transform raw content into well-structured interview-style questions and answers.**
 
 ---
 
@@ -14,8 +12,8 @@ This is a **perfect use case for LLMs** since they excel at **understanding, sum
 
 The pipeline consists of the following steps:
 
-1. **Load Books as PDFs**:  
-   - Books in **Generative AI, NLP, ML, Math for ML, and System Design** are loaded as **PDFs**.  
+1. **Load Content**:  
+   - Technical content is loaded and processed for knowledge extraction.
 
 2. **Preprocessing & Text Chunking**:  
    - The text is extracted, cleaned, and chunked into **meaningful sections** using `RecursiveCharacterTextSplitter`.  
@@ -23,7 +21,7 @@ The pipeline consists of the following steps:
 
 3. **Retrieving Contextual Knowledge**:  
    - A **vector database (ChromaDB)** stores previous chunks to provide additional **context retrieval** for better question generation.  
-   - This allows the LLM to generate **coherent and structured** Q&A based on **actual book content**.
+   - This allows the LLM to generate **coherent and structured** Q&A based on the content.
 
 4. **LLM-Powered Q&A Generation**:  
    - A **custom LLM prompt** instructs the model to extract **specific, well-formed** questions and answers.  
@@ -37,25 +35,23 @@ The pipeline consists of the following steps:
 
 ## 🤝 Collaboration & Contributions  
 
-🔹 **Want to improve the dataset?**  
-I’d love to collaborate! If you have **books from other AI-related fields** or even want to generalize this to **other technical domains (e.g., Cybersecurity, Mathematics, Data Engineering, etc.)**, feel free to contribute.
+🔹 **Want to improve the project?**  
+I'd love to collaborate! If you want to extend this to **other technical domains**, feel free to contribute.
 
 🔹 **How to Contribute?**  
-- You can **suggest new books** to be processed.  
-- If you want to **extend the script to other domains**, I’d be happy to review PRs and collaborate.  
-- If you find **errors or inconsistencies**, feel free to refine the dataset.  
+- You can **suggest new content sources** to be processed.  
+- If you want to **extend the script to other domains**, I'd be happy to review PRs and collaborate.  
+- If you find **errors or inconsistencies**, feel free to submit improvements.  
 
 ---
 
 ## ⚡ Why This Project Matters  
 
-This project demonstrates how **LLMs can automate knowledge extraction**. Instead of manually crafting interview questions from hundreds of pages, we:  
+This project demonstrates how **LLMs can automate knowledge extraction**. Instead of manually crafting interview questions, we:  
 
-✅ **Use LLMs to extract meaningful insights** from authoritative sources.  
-✅ **Ensure high-quality, structured Q&A pairs** for study, fine-tuning, and AI-powered interview assistants.  
+✅ **Use LLMs to extract meaningful insights** from technical content.  
+✅ **Ensure high-quality, structured Q&A pairs** for study and AI-powered interview assistants.  
 ✅ **Create a scalable and adaptable pipeline** that can be expanded to more fields.  
-
-If you’re working in **AI, ML, NLP, or education**, this project showcases a real-world application of **LLMs beyond chatbots—using them for structured knowledge curation.**  
 
 ---
 
@@ -71,10 +67,31 @@ If you’re working in **AI, ML, NLP, or education**, this project showcases a r
    uv sync --all-extras --dev
    ```
 
-3. **Install `ollama` (for local LLM execution):**  
+3. **Install and Configure Ollama:**
    ```shell
+   # Install Ollama
    curl -fsSL https://ollama.com/install.sh | sh
+   
+   # Pull the LLaMA 3.2:3b model
+   ollama pull llama3.2:3b
+   
+   # Apply custom Modelfile to increase context size
+   ollama create custom-llama -f Modelfile
    ```
+
+   The `Modelfile` configures LLaMA 3.2:3b with an increased context size of 5000 tokens:
+   ```
+   FROM llama3.2:3b
+   PARAMETER num_ctx 5000
+   ```
+
+4. **Set up Dagster:**
+   - The project uses Dagster for orchestration and monitoring of the extraction pipeline
+   - The Dagster UI provides visibility into job runs, asset materializations, and pipeline status
+   - Access the Dagster UI locally at `http://localhost:3000` after starting the server:
+     ```shell
+     dagster dev
+     ```
 
 ---
 
@@ -106,5 +123,4 @@ uv run pytest
 
 ## 📬 Contact  
 
-If you have **any suggestions, feature requests, or would like to collaborate**, feel free to reach out! Let’s enhance this **LLM-powered interview question generator** together. 🚀  
-
+If you have **any suggestions, feature requests, or would like to collaborate**, feel free to reach out! Let's enhance this **LLM-powered interview question generator** together. 🚀
