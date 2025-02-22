@@ -12,8 +12,7 @@ class ExtractTranscriptConfig(Config):
 
 def get_transcript(config: ExtractTranscriptConfig) -> Generator[str, None, None]:
     """Yields transcript text entry by entry."""
-    video_id = "LPZh9BOjkQs"
-    transcript = YouTubeTranscriptApi.get_transcript(video_id)
+    transcript = YouTubeTranscriptApi.get_transcript(config.video_id)
     for entry in transcript:
         yield entry["text"]
 
@@ -40,12 +39,18 @@ def stream_transcript_chunks(
 
 
 @asset(required_resource_keys={"ollama_resource"})
-def extract_entries(
+def extract_entries_transcript(
     context: AssetExecutionContext, config: ExtractTranscriptConfig
 ) -> List[Dict[str, str]]:
     ollama_resource: OllamaResource = context.resources.ollama_resource
     entities: List[Dict[str, str]] = []
-    for text in stream_transcript_chunks(get_transcript(config)):
+    try:
+        transcript = stream_transcript_chunks(get_transcript(config))
+    except Exception:
+        context.log.info(
+            f"Error: Could not get transcript from video: {config.video_id}"
+        )
+    for text in transcript:
         if text:
             # Sanitize text and retrieve additional context from the vector store
             text = utils.sanitize_text(text)
@@ -77,9 +82,12 @@ def extract_entries(
                     model_name="llama3.2:3b",
                 )
                 generated_entries = utils.entries_to_json(list_entries.entries)
+                context.log.info(f"Entries: {generated_entries}")
                 entities.extend(generated_entries)
             except Exception as e:
-                context.log.error(f"Error : {e}")
+                context.log.error(
+                    f"Error while processing video {config.video_id}: {e}"
+                )
         else:
-            context.log.info("No extractable text.")
+            context.log.info(f"No extractable text from video: {config.video_id}")
     return entities
