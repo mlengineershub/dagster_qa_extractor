@@ -4,16 +4,16 @@ import json
 from datetime import datetime
 
 # Directory containing JSON files
-json_dir = 'results/'
+json_dir = "results/"
 
 # Words to filter out (case-insensitive)
-bad_words = ['book', 'document', 'section', 'chapter', 'figure']
+bad_words = ["book", "document", "section", "chapter", "figure"]
 
 merged_entries = []
 
 # Loop over all JSON files in the directory
-for filepath in glob.glob(os.path.join(json_dir, '*.json')):
-    with open(filepath, 'r', encoding='utf-8') as f:
+for filepath in glob.glob(os.path.join(json_dir, "*.json")):
+    with open(filepath, "r", encoding="utf-8") as f:
         try:
             data = json.load(f)
         except json.JSONDecodeError as e:
@@ -38,7 +38,7 @@ for filepath in glob.glob(os.path.join(json_dir, '*.json')):
 output_filename = f"results/merged_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
 # Write the merged entries to the new JSON file
-with open(output_filename, 'w', encoding='utf-8') as outfile:
+with open(output_filename, "w", encoding="utf-8") as outfile:
     json.dump(merged_entries, outfile, indent=4)
 
 print(f"Merged JSON saved to {output_filename}")

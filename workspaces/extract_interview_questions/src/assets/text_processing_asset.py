@@ -21,6 +21,7 @@ class ExtractEntriesConfig(Config):
 
 # --- Helper Functions and Models ---
 
+
 def initialize_vectordb(file_path: str) -> Chroma:
     name = os.path.basename(file_path).split(".")[0].replace(" ", "_")
     persist_dir = f"./embedding_databases/{name}"
