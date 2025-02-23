@@ -114,7 +114,7 @@ def extract_entries(
 
                     try:
                         # Use the openai_resource to generate completions
-                        model_name = os.getenv("MODEL_NAME", "gpt-4o-mini")
+                        model_name = os.getenv("MODEL_NAME","")
                         list_entries = openai_resource.generate_completion(
                             system_prompt=system_prompt,
                             user_prompt=prompt,
