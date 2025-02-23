@@ -1,9 +1,9 @@
-import pandas as pd
-from bertopic import BERTopic
+import pandas as pd  # type: ignore
+from bertopic import BERTopic  # type: ignore
 import json
 
 # Load the dataset from the JSON file
-df = pd.read_json('results/merged_20250223_210238.json')
+df = pd.read_json("results/merged_20250223_210238.json")
 
 # Combine the 'question' and 'answer' columns into one text column for topic modeling
 df["text"] = df["question"] + " " + df["answer"]
@@ -30,23 +30,20 @@ for topic_id in topic_info["Topic"]:
     # Convert words (list of tuples) to a list of lists with native types
     converted_words = [[word, float(weight)] for word, weight in words]
 
-    all_topics[python_topic_id] = {
-        "size": int(count),
-        "words": converted_words
-    }
+    all_topics[python_topic_id] = {"size": int(count), "words": converted_words}
 
     print(f"Topic {python_topic_id}: {int(count)} documents")
     print(f"Words: {converted_words}")
 
 # Save the topic details to a JSON file
-with open('results/topic_details.json', 'w') as f:
+with open("results/topic_details.json", "w") as f:
     json.dump(all_topics, f, indent=4)
 print("Topic details saved to results/topic_details.json")
 
 # Create a mapping from topic ID to the list of keywords (extracting only the words)
 topic_keywords = {
-    topic_id: [word for word, _ in details["words"]]
-    for topic_id, details in all_topics.items()
+    topic_id: [word for word, _ in topic_model.get_topic(topic_id)]
+    for topic_id in all_topics.keys()
 }
 
 # Add a new 'keywords' column to the DataFrame based on the labeled topics
@@ -56,6 +53,6 @@ df["keywords"] = df["bertopic_labeled_topic"].apply(lambda t: topic_keywords.get
 print(df[["answer", "bertopic_labeled_topic", "keywords"]])
 
 # Save the updated DataFrame with the new 'keywords' column to a JSON file
-output_path = 'results/labeled_interview_qa_bertopic.json'
-df.to_json(output_path, orient='records', indent=4)
+output_path = "results/labeled_interview_qa_bertopic.json"
+df.to_json(output_path, orient="records", indent=4)
 print(f"Labeled dataset with keywords saved to {output_path}")
