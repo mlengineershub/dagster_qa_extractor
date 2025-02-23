@@ -4,13 +4,16 @@ import re
 import PyPDF2
 from dagster import asset, AssetExecutionContext, Config
 from typing import Any, List, Dict
-from src.resources.ollama_ressource import OllamaResource
+from src.resources.openai_ressource import OpenAIResource
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.resources.models import Entry
+from dotenv import load_dotenv
 # --- Configuration ---
+
+load_dotenv()
 
 
 class ExtractEntriesConfig(Config):
@@ -75,14 +78,14 @@ def write_entries(entries: List[Dict[str, str]], filename: str) -> None:
 # --- Dagster Asset Definition ---
 
 
-@asset(required_resource_keys={"ollama_resource"})
+@asset(required_resource_keys={"openai_resource"})
 def extract_entries(
     context: AssetExecutionContext, config: ExtractEntriesConfig
 ) -> List[Dict[str, str]]:
     pdf_path = config.pdf_path
     starting_page = config.starting_page
     entities: List[Dict[str, str]] = []
-    ollama_resource: OllamaResource = context.resources.ollama_resource
+    openai_resource: OpenAIResource = context.resources.openai_resource
     file_name = pdf_path.split("/")[-1].replace(".pdf", "")
     # try:
     #     vector_store = initialize_vectordb(pdf_path)
@@ -129,11 +132,12 @@ def extract_entries(
                     )
 
                     try:
-                        # Use the ollama_resource to generate completions
-                        list_entries = ollama_resource.generate_completion(
+                        # Use the openai_resource to generate completions
+                        model_name = os.getenv("MODEL_NAME", "gpt-4o-mini")
+                        list_entries = openai_resource.generate_completion(
                             system_prompt=system_prompt,
                             user_prompt=prompt,
-                            model_name="llama3.2:3b",
+                            model_name=model_name,
                         )
                         generated_entries = entries_to_json(list_entries.entries)
                         context.log.info(
