@@ -116,7 +116,7 @@ def extract_entries(
                         "Avoid Talking about Figures, Tables, and References. "
                         "Avoid talking about the author and the book itself. "
                         "Avoid talking about the structure of the book. "
-                        "An example of a question: 'How do generative multimodal models differ from language models?'. "
+                        "The question should contain all the context needed to answer it, do not refer to the text, but instead add the context to the question from the text. "
                         "The answers should rely mostly on the text provided and your knowledge. "
                         "The answer should not contain phrases like 'this text' or 'this context'—answer directly. "
                         "The question/answer pairs will serve to generate a consistent interview question database. "
@@ -133,7 +133,7 @@ def extract_entries(
                         list_entries = ollama_resource.generate_completion(
                             system_prompt=system_prompt,
                             user_prompt=prompt,
-                            model_name="llama3.2:3b",
+                            model_name="deepseek-r1:8b",
                         )
                         generated_entries = entries_to_json(list_entries.entries)
                         context.log.info(

@@ -9,7 +9,7 @@ defs = Definitions(
         extract_entries,
     ],
     resources={
-        "ollama_resource": OllamaResource(model_name="llama3.2:3b"),
+        "ollama_resource": OllamaResource(model_name="deepseek-r1:8b"),
     },
     jobs=[
         process_all_pdfs,

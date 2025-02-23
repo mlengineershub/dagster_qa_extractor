@@ -40,7 +40,7 @@ def process_all_pdfs_op(context: OpExecutionContext) -> List[List[Dict[str, str]
 
 @job(
     resource_defs={
-        "ollama_resource": OllamaResource(model_name="llama3.2:3b", timeout=60.0)
+        "ollama_resource": OllamaResource(model_name="deepseek-r1:8b", timeout=60.0)
     }
 )
 def process_all_pdfs():  # type: ignore

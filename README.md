@@ -73,7 +73,7 @@ This project demonstrates how **LLMs can automate knowledge extraction**. Instea
    curl -fsSL https://ollama.com/install.sh | sh
    
    # Pull the LLaMA 3.2:3b model
-   ollama pull llama3.2:3b
+   ollama pull deepseek-r1:8b
    
    # Apply custom Modelfile to increase context size
    ollama create custom-llama -f Modelfile
@@ -81,7 +81,7 @@ This project demonstrates how **LLMs can automate knowledge extraction**. Instea
 
    The `Modelfile` configures LLaMA 3.2:3b with an increased context size of 5000 tokens:
    ```
-   FROM llama3.2:3b
+   FROM deepseek-r1:8b
    PARAMETER num_ctx 5000
    ```
 
