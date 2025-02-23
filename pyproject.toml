@@ -24,6 +24,7 @@ dev = [
     "langchain-community>=0.3.17",
     "pypdf>=5.3.0",
     "youtube-transcript-api>=0.6.3",
+    "bertopic>=0.16.4",
 ]
 
 [tool.uv.sources]
