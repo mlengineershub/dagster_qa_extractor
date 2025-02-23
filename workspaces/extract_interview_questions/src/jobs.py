@@ -54,7 +54,9 @@ def process_all_videos_op(context: OpExecutionContext) -> List[List[Dict[str, st
         with open(path, newline="") as videos:
             video_reader = csv.reader(videos)
             for row in video_reader:
-                config: ExtractTranscriptConfig = ExtractTranscriptConfig(video_id="".join(row))
+                config: ExtractTranscriptConfig = ExtractTranscriptConfig(
+                    video_id="".join(row)
+                )
                 asset_context = build_asset_context(
                     resources={"ollama_resource": context.resources.ollama_resource}
                 )
@@ -65,7 +67,6 @@ def process_all_videos_op(context: OpExecutionContext) -> List[List[Dict[str, st
     except Exception as e:
         context.log.info(f"Error while processing videos csv file: {e}")
     return all_results
-
 
 
 @job(
