@@ -3,9 +3,11 @@ from pydantic import Field
 from openai import OpenAI, OpenAIError
 from typing import Any
 from src.resources.models import ListEntries
+import os
+from dotenv import load_dotenv
 
 
-class OllamaResource(ConfigurableResource):  # type: ignore
+class OpenAIResource(ConfigurableResource):  # type: ignore
     model_name: str = Field(
         description="The name of the model to use",
     )
@@ -18,12 +20,12 @@ class OllamaResource(ConfigurableResource):  # type: ignore
         super().__init__(**kwargs)
         self._client: OpenAI | None = None
 
-    def _get_client(self) -> OpenAI:
+    def _get_client(self, api_key: str | None, base_url: str | None) -> OpenAI:
         if self._client is None:
             self._client = OpenAI(
-                base_url="http://localhost:11434/v1",
+                base_url=base_url,
                 timeout=self.timeout,
-                api_key="ollama_api_key",
+                api_key=api_key,
             )
         return self._client
 
@@ -34,7 +36,11 @@ class OllamaResource(ConfigurableResource):  # type: ignore
         model_name: str,
     ) -> ListEntries:
         try:
-            client = self._get_client()
+            load_dotenv()
+            api_key = os.getenv("API_KEY")
+            base_url = os.getenv("BASE_URL")
+
+            client = self._get_client(api_key=api_key, base_url=base_url)
 
             response = client.beta.chat.completions.parse(
                 model=model_name,
@@ -56,7 +62,6 @@ class OllamaResource(ConfigurableResource):  # type: ignore
                 raise ValueError(
                     f"Invalid response. Expected instance of ListEntries, got {type(parsed).__name__ if parsed is not None else 'None'}"
                 )
-            print(parsed)
 
             return parsed
 

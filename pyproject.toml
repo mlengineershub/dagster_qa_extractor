@@ -23,6 +23,7 @@ dev = [
     "langchain-chroma>=0.2.2",
     "langchain-community>=0.3.17",
     "pypdf>=5.3.0",
+    "youtube-transcript-api>=0.6.3",
 ]
 
 [tool.uv.sources]
