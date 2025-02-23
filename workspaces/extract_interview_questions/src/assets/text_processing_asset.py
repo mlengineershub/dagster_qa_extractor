@@ -1,6 +1,5 @@
 import os
 import json
-import re
 import PyPDF2
 from dagster import asset, AssetExecutionContext, Config
 from typing import Any, List, Dict
@@ -9,7 +8,7 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from src.resources.models import Entry
+from src.assets import utils
 # --- Configuration ---
 
 
@@ -19,18 +18,6 @@ class ExtractEntriesConfig(Config):
 
 
 # --- Helper Functions and Models ---
-
-
-def sanitize_json_string(json_str: str) -> str:
-    return re.sub(r"\\x(?![0-9a-fA-F]{2})", r"\\x00", json_str)
-
-
-def sanitize_text(text: str) -> str:
-    return text.encode("utf-8", errors="replace").decode("utf-8")
-
-
-def entries_to_json(entries: List[Entry]) -> List[Dict[str, str]]:
-    return [{"question": entry.question, "answer": entry.answer} for entry in entries]
 
 
 def initialize_vectordb(file_path: str) -> Chroma:
@@ -52,7 +39,7 @@ def initialize_vectordb(file_path: str) -> Chroma:
         )
         all_splits = text_splitter.split_documents(docs)
         for doc in all_splits:
-            doc.page_content = sanitize_text(doc.page_content)
+            doc.page_content = utils.sanitize_text(doc.page_content)
         embeddings = OllamaEmbeddings(model="mxbai-embed-large:latest")
         vector_store = Chroma(
             collection_name=name,
@@ -104,7 +91,7 @@ def extract_entries(
                 page_text = page.extract_text()
                 if page_text:
                     # Sanitize text and retrieve additional context from the vector store
-                    page_text = sanitize_text(page_text)
+                    page_text = utils.sanitize_text(page_text)
                     # additional_context = retrieve_additional_context(page_text, vector_store)
                     system_prompt = "You are a precise and very efficient knowledge extractor and formatter. "
                     # Build the prompt for extraction
@@ -135,7 +122,7 @@ def extract_entries(
                             user_prompt=prompt,
                             model_name="llama3.2:3b",
                         )
-                        generated_entries = entries_to_json(list_entries.entries)
+                        generated_entries = utils.entries_to_json(list_entries.entries)
                         context.log.info(
                             f"Entries from page {page_num + 1}: {generated_entries}"
                         )

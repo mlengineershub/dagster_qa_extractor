@@ -1,7 +1,12 @@
 import os
+import csv
 from typing import List, Dict
 from dagster import op, job, OpExecutionContext, build_asset_context
 from src.assets.text_processing_asset import extract_entries, ExtractEntriesConfig
+from src.assets.transcript_processing_asset import (
+    extract_entries_transcript,
+    ExtractTranscriptConfig,
+)
 from src.resources.ollama_ressource import OllamaResource
 
 
@@ -38,6 +43,31 @@ def process_all_pdfs_op(context: OpExecutionContext) -> List[List[Dict[str, str]
     return all_results
 
 
+@op(required_resource_keys={"ollama_resource"})
+def process_all_videos_op(context: OpExecutionContext) -> List[List[Dict[str, str]]]:
+    """
+    processes each video in the videos.csv file by calling the extract_entries_transcript asset
+    """
+    path: str = "data/videos.csv"
+    all_results: List[List[Dict[str, str]]] = []
+    try:
+        with open(path, newline="") as videos:
+            video_reader = csv.reader(videos)
+            for row in video_reader:
+                config: ExtractTranscriptConfig = ExtractTranscriptConfig(video_id="".join(row))
+                asset_context = build_asset_context(
+                    resources={"ollama_resource": context.resources.ollama_resource}
+                )
+                results: List[Dict[str, str]] = extract_entries_transcript(
+                    asset_context, config
+                )  # type: ignore
+                all_results.append(results)
+    except Exception as e:
+        context.log.info(f"Error while processing videos csv file: {e}")
+    return all_results
+
+
+
 @job(
     resource_defs={
         "ollama_resource": OllamaResource(model_name="llama3.2:3b", timeout=60.0)
@@ -45,3 +75,12 @@ def process_all_pdfs_op(context: OpExecutionContext) -> List[List[Dict[str, str]
 )
 def process_all_pdfs():  # type: ignore
     process_all_pdfs_op()
+
+
+@job(
+    resource_defs={
+        "ollama_resource": OllamaResource(model_name="llama3.2:3b", timeout=60.0)
+    }
+)
+def process_all_videos():  # type: ignore
+    process_all_videos_op()
