@@ -2,8 +2,14 @@ from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
 from dagster import asset, AssetExecutionContext, Config
 from typing import List, Dict, Generator
 from io import StringIO
-from src.resources.ollama_ressource import OllamaResource
+from src.resources.openai_ressource import OpenAIResource
 from src.assets import utils
+import os
+import json
+from dotenv import load_dotenv
+# --- Configuration ---
+
+load_dotenv()
 
 
 class ExtractTranscriptConfig(Config):
@@ -38,11 +44,16 @@ def stream_transcript_chunks(
         yield leftover
 
 
-@asset(required_resource_keys={"ollama_resource"})
+def write_entries(entries: List[Dict[str, str]], filename: str) -> None:
+    with open(filename, "w", encoding="utf-8") as file:
+        json.dump(entries, file, indent=2)
+
+
+@asset(required_resource_keys={"openai_resource"})
 def extract_entries_transcript(
     context: AssetExecutionContext, config: ExtractTranscriptConfig
 ) -> List[Dict[str, str]]:
-    ollama_resource: OllamaResource = context.resources.ollama_resource
+    openai_resource: OpenAIResource = context.resources.openai_resource
     entities: List[Dict[str, str]] = []
     try:
         transcript = stream_transcript_chunks(get_transcript(config))
@@ -75,15 +86,21 @@ def extract_entries_transcript(
                 f"Section: {text}"
             )
             try:
-                # Use the ollama_resource to generate completions
-                list_entries = ollama_resource.generate_completion(
+                model_name = os.getenv("MODEL_NAME", "gpt-4o-mini")
+                # Use the openai_resource to generate completions
+                list_entries = openai_resource.generate_completion(
                     system_prompt=system_prompt,
                     user_prompt=prompt,
-                    model_name="llama3.2:3b",
+                    model_name=model_name,
                 )
                 generated_entries = utils.entries_to_json(list_entries.entries)
                 context.log.info(f"Entries: {generated_entries}")
                 entities.extend(generated_entries)
+
+                write_entries(
+                    entities,
+                    filename=f"results/{config.video_id}_extracted_entries.json",
+                )
             except Exception as e:
                 context.log.error(
                     f"Error while processing video {config.video_id}: {e}"
