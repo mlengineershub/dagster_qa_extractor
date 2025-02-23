@@ -1,16 +1,17 @@
 import os
-import json
-import re
 import PyPDF2
 from dagster import asset, AssetExecutionContext, Config
 from typing import Any, List, Dict
-from src.resources.ollama_ressource import OllamaResource
+from src.resources.openai_ressource import OpenAIResource
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from src.resources.models import Entry
+from src.assets import utils
+from dotenv import load_dotenv
 # --- Configuration ---
+
+load_dotenv()
 
 
 class ExtractEntriesConfig(Config):
@@ -19,19 +20,6 @@ class ExtractEntriesConfig(Config):
 
 
 # --- Helper Functions and Models ---
-
-
-def sanitize_json_string(json_str: str) -> str:
-    return re.sub(r"\\x(?![0-9a-fA-F]{2})", r"\\x00", json_str)
-
-
-def sanitize_text(text: str) -> str:
-    return text.encode("utf-8", errors="replace").decode("utf-8")
-
-
-def entries_to_json(entries: List[Entry]) -> List[Dict[str, str]]:
-    return [{"question": entry.question, "answer": entry.answer} for entry in entries]
-
 
 def initialize_vectordb(file_path: str) -> Chroma:
     name = os.path.basename(file_path).split(".")[0].replace(" ", "_")
@@ -52,7 +40,7 @@ def initialize_vectordb(file_path: str) -> Chroma:
         )
         all_splits = text_splitter.split_documents(docs)
         for doc in all_splits:
-            doc.page_content = sanitize_text(doc.page_content)
+            doc.page_content = utils.sanitize_text(doc.page_content)
         embeddings = OllamaEmbeddings(model="mxbai-embed-large:latest")
         vector_store = Chroma(
             collection_name=name,
@@ -67,22 +55,17 @@ def retrieve_additional_context(page_text: str, vector_store: Chroma) -> Any:
     return vector_store.similarity_search(query=page_text, k=1)
 
 
-def write_entries(entries: List[Dict[str, str]], filename: str) -> None:
-    with open(filename, "w", encoding="utf-8") as file:
-        json.dump(entries, file, indent=2)
-
-
 # --- Dagster Asset Definition ---
 
 
-@asset(required_resource_keys={"ollama_resource"})
+@asset(required_resource_keys={"openai_resource"})
 def extract_entries(
     context: AssetExecutionContext, config: ExtractEntriesConfig
 ) -> List[Dict[str, str]]:
     pdf_path = config.pdf_path
     starting_page = config.starting_page
     entities: List[Dict[str, str]] = []
-    ollama_resource: OllamaResource = context.resources.ollama_resource
+    openai_resource: OpenAIResource = context.resources.openai_resource
     file_name = pdf_path.split("/")[-1].replace(".pdf", "")
     # try:
     #     vector_store = initialize_vectordb(pdf_path)
@@ -104,7 +87,7 @@ def extract_entries(
                 page_text = page.extract_text()
                 if page_text:
                     # Sanitize text and retrieve additional context from the vector store
-                    page_text = sanitize_text(page_text)
+                    page_text = utils.sanitize_text(page_text)
                     # additional_context = retrieve_additional_context(page_text, vector_store)
                     system_prompt = "You are a precise and very efficient knowledge extractor and formatter. "
                     # Build the prompt for extraction
@@ -129,13 +112,14 @@ def extract_entries(
                     )
 
                     try:
-                        # Use the ollama_resource to generate completions
-                        list_entries = ollama_resource.generate_completion(
+                        # Use the openai_resource to generate completions
+                        model_name = os.getenv("MODEL_NAME", "gpt-4o-mini")
+                        list_entries = openai_resource.generate_completion(
                             system_prompt=system_prompt,
                             user_prompt=prompt,
-                            model_name="llama3.2:3b",
+                            model_name=model_name,
                         )
-                        generated_entries = entries_to_json(list_entries.entries)
+                        generated_entries = utils.entries_to_json(list_entries.entries)
                         context.log.info(
                             f"Entries from page {page_num + 1}: {generated_entries}"
                         )
@@ -146,7 +130,7 @@ def extract_entries(
                     context.log.info(f"No extractable text on page {page_num + 1}.")
 
                 # Optionally, write the accumulated entries to a file for inspection
-                write_entries(
+                utils.write_entries(
                     entities, filename=f"results/{file_name}_extracted_entries.json"
                 )
     except Exception as e:
